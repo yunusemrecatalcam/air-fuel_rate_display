@@ -1,8 +1,10 @@
 #include <Arduino.h>
+#include <math.h>
 #define VOLTAGE_SRC A0 //pin for reading voltage
 #define PROPORTION 204.8
-#define DELAY 500000000000
-#define VLT 250
+#define DELAY      5
+#define IDLE_VLT   255
+#define ACTIVE_VLT 230
 
 const float p1 = 4.41;
 const float p2 = 7.35;
@@ -30,7 +32,16 @@ static const byte digitCodeMap[] = {
 
 void zeros(){
   for(int i =0;i<4;i++)
-    analogWrite(digits[i],VLT);
+    analogWrite(digits[i],IDLE_VLT);
+}
+void write(int num_to_write){
+  int buff;
+  if(num_to_write <=9 && num_to_write >=0){
+    for(int i =0;i<8;i++){
+      buff = digitCodeMap[num_to_write];
+      digitalWrite(segmentPins[i], (buff& (0b00000001<<i)) );
+    }
+  }
 }
 
 void setup() {
@@ -44,7 +55,7 @@ void setup() {
       pinMode(segmentPins[i], OUTPUT);
 }
 
-int buff;
+
 
 void loop() {
     voltage = analogRead(VOLTAGE_SRC)/PROPORTION;
@@ -53,33 +64,28 @@ void loop() {
     //Serial.print(voltage);
     //Serial.print("--");
     //Serial.println(afr);
-    zeros();
-
-    for(int i =0;i<8;i++){
-      buff = digitCodeMap[9];
-      digitalWrite(segmentPins[i], (buff& (0b00000001<<i)) );
-    }
-    //for(int i =0;i<12;i++)
-    //  digitalWrite(i,LOW);
-
-    //digitalWrite(segmentPins[0],HIGH);
-/*
-    zeros();
-    analogWrite(digits[0],VLT);
-    delayMicroseconds(DELAY);
 
     zeros();
-    analogWrite(digits[1],VLT);
-    delayMicroseconds(DELAY);
+    analogWrite(digits[0],ACTIVE_VLT);
+    write(afr/10);
+    delay(DELAY);
 
     zeros();
-    analogWrite(digits[2],VLT);
-    delayMicroseconds(DELAY);
+    analogWrite(digits[1],ACTIVE_VLT);
+    write(fmod(afr, 10));
+    digitalWrite(segmentPins[0], HIGH);
+    delay(DELAY);
+
+    zeros();
+    analogWrite(digits[2],ACTIVE_VLT);
+    write(fmod(afr,1)*10);
+    delay(DELAY);
 
 
     zeros();
-    analogWrite(digits[3],VLT);
-    delayMicroseconds(DELAY);
+    analogWrite(digits[3],ACTIVE_VLT);
+    write(fmod(afr,0.1)*100);
+    delay(DELAY);
     zeros();
-*/
+
 }
